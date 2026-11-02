@@ -1,14 +1,7 @@
-
+import streamlit as st
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
-
-# 페이지 기본 설정
-st.set_page_config(
-    page_title="서울 주요 관광지 TOP 10",
-    page_icon="🗽",
-    layout="wide"
-)
 
 # 데이터 준비 (외국인 선호 서울 주요 관광지 TOP 10)
 spots = [
@@ -101,7 +94,7 @@ st.title("🗽 외국인이 좋아하는 서울 주요 관광지 TOP 10")
 st.markdown("서울 중심부 지도 위에 외국인 관광객들에게 가장 인기 있는 명소 10곳을 표시했습니다.")
 st.write("---")
 
-# 1. Folium 지도 생성 (서울 중심 Coordinate)
+# 1. Folium 지도 생성
 m = folium.Map(location=[37.555, 126.985], zoom_start=12, tiles="OpenStreetMap")
 
 # 마커 추가
@@ -123,11 +116,9 @@ st.write("---")
 # 2. 관광지 상세 설명 출력
 st.subheader("📑 관광지별 상세 안내")
 
-# 2열 카드로 배치
 col1, col2 = st.columns(2)
 
 for idx, row in df.iterrows():
-    # 컬럼 교대 배치
     target_col = col1 if idx % 2 == 0 else col2
     
     with target_col:
