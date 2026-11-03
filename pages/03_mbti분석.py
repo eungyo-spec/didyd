@@ -278,4 +278,27 @@ fig.update_layout(
     height=550,
 )
 
-# 7. 화면 출력
+# 7. 화면 출력 (왼쪽: 요약 및 Top 10 표, 오른쪽: 그래프)
+col1, col2 = st.columns([1, 3])
+
+with col1:
+  st.subheader(f"🥇 {selected_mbti} 1위 국가")
+  top_1 = rank_df.iloc[0]
+  st.metric(
+      label=f"{top_1['Country']}",
+      value=f"{top_1['Percentage']:.2f}%",
+      delta="1위",
+  )
+
+  st.write("---")
+  st.markdown("### 📋 Top 10 순위 표")
+  st.dataframe(
+      rank_df[["Country", "Percentage"]].style.format(
+          {"Percentage": "{:.2f}%"}
+      ),
+      use_container_width=True,
+      height=350,
+  )
+
+with col2:
+  st.plotly_chart(fig, use_container_width=True)
