@@ -1,4 +1,3 @@
-import matplotlib.colors as mcolors
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -46,14 +45,27 @@ mbti_df = (
     .reset_index(drop=True)
 )
 
-# 5. 색상 그라데이션 생성 (1등: 노란색, 2등~16등: 초록색 -> 점점 어두워짐)
-green_cmap = mcolors.LinearSegmentedColorMap.from_list(
-    "green_grad", ["#76D7C4", "#145A32"], N=15
-)
-green_colors = [mcolors.to_hex(green_cmap(i / 14)) for i in range(15)]
+# 5. 초록색 그라데이션 색상 리스트 (matplotlib 없이 구현)
+green_colors = [
+    "#145A32",
+    "#196F3D",
+    "#1E8449",
+    "#229954",
+    "#28B463",
+    "#2ECC71",
+    "#52BE80",
+    "#58D68D",
+    "#7DCEA0",
+    "#82E0AA",
+    "#A3E4D7",
+    "#A9DFBF",
+    "#D4EFDF",
+    "#EAFAF1",
+    "#F4FBF7",
+]
 
-# 1등은 노란색(#FFD700), 나머지는 그라데이션 색상 배치
-bar_colors = ["#FFD700"] + green_colors
+# 1등은 노란색(#FFD700), 2위~16위는 초록색 그라데이션 적용
+bar_colors = ["#FFD700"] + green_colors[: len(mbti_df) - 1]
 
 # 6. Plotly 막대그래프 생성
 fig = go.Figure(
