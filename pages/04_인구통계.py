@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -7,11 +9,20 @@ st.set_page_config(page_title="서울시 연령별 인구 분석", layout="wide"
 st.title("📊 서울특별시 자치구별 연령별 인구 분포")
 
 
-# 2. 한글 깨짐 방지 데이터 로드 함수 (인코딩 자동 시도)
+# 2. 상위 폴더의 population.csv 경로 추적 및 한글 깨짐 방지 로드 함수
 @st.cache_data
-def load_data(file_path):
+def load_data():
+    # 현재 py 파일 위치를 기준으로 상위 폴더의 population.csv 파일 경로 설정
+    current_dir = Path(__file__).parent
+    file_path = current_dir.parent / "population.csv"
+
+    # 상위 폴더 경로 시도 실패 시 일반 상대 경로('../population.csv') 대체
+    if not file_path.exists():
+        file_path = "../population.csv"
+
     encodings = ["cp949", "euc-kr", "utf-8", "utf-8-sig"]
     df = None
+
     for enc in encodings:
         try:
             df = pd.read_csv(file_path, encoding=enc)
@@ -21,7 +32,7 @@ def load_data(file_path):
 
     if df is None:
         st.error(
-            "파일 인코딩 오류가 발생했습니다. population.csv 파일을 확인해주세요."
+            "상위 폴더에서 population.csv 파일을 찾을 수 없거나 인코딩 오류가 발생했습니다."
         )
         return None
 
@@ -41,7 +52,7 @@ def load_data(file_path):
     return df
 
 
-df = load_data("population.csv")
+df = load_data()
 
 if df is not None:
     # 3. 사이드바 필터 (행정구, 성별, 연도)
@@ -91,7 +102,7 @@ if df is not None:
 
     # 4. 꺾은선 그래프 생성 (Plotly)
     # - 연한 초록색 계열 (#90EE90)
-    # - 가로축 10살 단위 구분선, 세로축 100 단위 구분선(dtick=100) 적용
+    # - 가로축 10살 단위, 세로축 100 단위 구분선(grid) 반영
     fig = px.line(
         chart_df,
         x="나이",
@@ -118,7 +129,7 @@ if df is not None:
             showgrid=True,
             gridcolor="lightgrey",
             gridwidth=1,
-            dtick=100,  # 100 단위 구분선 설정
+            dtick=100,  # 세로축 100 단위 구분선
         ),
         plot_bgcolor="white",
         height=550,
