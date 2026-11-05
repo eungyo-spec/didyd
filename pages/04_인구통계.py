@@ -108,7 +108,7 @@ if analysis_type == "1. 특정 행정구 연령별 꺾은선 그래프":
             showgrid=True,
             gridcolor="#E5E5E5",
             gridwidth=1,
-            dtick=100000,  # 10만 단위 구분선
+            dtick=10000,  # 1만 단위 구분선
             tickformat=",.0f",
         ),
         hovermode="x unified",
@@ -162,7 +162,7 @@ else:
             showgrid=True,
             gridcolor="#E5E5E5",
             gridwidth=1,
-            dtick=100000,  # 10만 단위 구분선
+            dtick=10000,  # 1만 단위 구분선
             tickformat=",.0f",
         ),
         plot_bgcolor="white",
