@@ -1,4 +1,5 @@
 import pandas as pd
+import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
@@ -7,14 +8,13 @@ st.set_page_config(
     page_title="서울시 연령별 인구수 분석", page_icon="📈", layout="wide"
 )
 
-st.title("📈 연령대별 인구수 추이 분석")
+st.title("📈 연령대별 인구수 추이 및 구별 비교 분석")
 st.caption("2025년 서울특별시 및 자치구별 연령/성별 인구 데이터")
 
 
 # 1. 데이터 로드 (EUC-KR 인코딩 & 천 단위 쉼표 자동 처리)
 @st.cache_data
 def load_data():
-    # 한글 깨짐 방지를 위한 euc-kr 인코딩 사용
     df = pd.read_csv("population.csv", encoding="euc-kr", thousands=",")
 
     # 행정구역 명칭 정제 (예: '서울특별시 종로구 (1111000000)' -> '종로구')
@@ -48,27 +48,19 @@ age_categories = [
     "100세 이상",
 ]
 
-# 2. 사이드바 - 조건 선택 (연도, 행정구, 성별)
-st.sidebar.header("⚙️ 조회 조건 선택")
+# 2. 사이드바 - 조건 선택
+st.sidebar.header("⚙️ 데이터 조회 및 분석 조건")
 
-# 연도 선택 (데이터셋 기준 2025년)
-selected_year = st.sidebar.selectbox("연도 선택", ["2025년"])
-
-# 행정구 선택
-district_list = df["행정구"].tolist()
-selected_district = st.sidebar.selectbox(
-    "행정구 선택",
-    district_list,
-    index=1 if len(district_list) > 1 else 0,
+# 분석 유형 선택
+analysis_type = st.sidebar.radio(
+    "분석 유형 선택",
+    ["1. 특정 행정구 연령별 꺾은선 그래프", "2. 특정 연령대 최고 인구 구별 막대 그래프"],
 )
 
-# 성별 선택
+selected_year = st.sidebar.selectbox("연도 선택", ["2025년"])
 gender_option = st.sidebar.selectbox("성별 선택", ["전체", "남성", "여성"])
 
-# 3. 데이터 추출
-target_row = df[df["행정구"] == selected_district].iloc[0]
-
-# 성별 옵션에 따른 컬럼 매핑
+# 성별 매핑 prefix
 if gender_option == "전체":
     prefix = f"{selected_year}_거주자_"
 elif gender_option == "남성":
@@ -76,56 +68,134 @@ elif gender_option == "남성":
 else:
     prefix = f"{selected_year}_여_거주자_"
 
-population_values = [target_row[f"{prefix}{age}"] for age in age_categories]
-
-# 4. Plotly 꺾은선 그래프 생성
-fig = go.Figure()
-
-fig.add_trace(
-    go.Scatter(
-        x=age_categories,
-        y=population_values,
-        mode="lines+markers",
-        name=f"{selected_district} ({gender_option})",
-        # 연한 초록색 선 및 마커 설정 (#90EE90: LightGreen)
-        line=dict(color="#90EE90", width=3),
-        marker=dict(size=8, color="#2E8B57"),
-        hovertemplate="연령대: %{x}<br>인구수: %{y:,.0f}명<extra></extra>",
+# --- 기능 1: 행정구 선택 -> 연령별 꺾은선 그래프 ---
+if analysis_type == "1. 특정 행정구 연령별 꺾은선 그래프":
+    district_list = df["행정구"].tolist()
+    selected_district = st.sidebar.selectbox(
+        "행정구 선택", district_list, index=1 if len(district_list) > 1 else 0
     )
-)
 
-# 5. 그래프 레이아웃 및 눈금/구분선 설정
-fig.update_layout(
-    title=dict(
-        text=f"<b>[{selected_year}] {selected_district} - {gender_option} 연령별 인구수</b>",
-        font=dict(size=18),
-    ),
-    xaxis=dict(
-        title="나이 (연령대)",
-        showgrid=True,
-        gridcolor="#E5E5E5",
-        gridwidth=1,
-        dtick=1,  # 10살 단위(각 카테고리)마다 구분선 표시
-    ),
-    yaxis=dict(
-        title="인구수 (명)",
-        showgrid=True,
-        gridcolor="#E5E5E5",
-        gridwidth=1,
-        dtick=100,  # 세로축 100단위 구분선 표시
-        tickformat=",d",
-    ),
-    hovermode="x unified",
-    plot_bgcolor="white",
-    height=550,
-)
+    target_row = df[df["행정구"] == selected_district].iloc[0]
+    population_values = [target_row[f"{prefix}{age}"] for age in age_categories]
 
-# 6. Streamlit 화면 출력
-st.plotly_chart(fig, use_container_width=True)
-
-# 상세 데이터 표 보기
-with st.expander("📊 상세 데이터 확인하기"):
-    data_df = pd.DataFrame(
-        {"연령대": age_categories, "인구수(명)": population_values}
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=age_categories,
+            y=population_values,
+            mode="lines+markers",
+            name=f"{selected_district} ({gender_option})",
+            line=dict(color="#90EE90", width=3),  # 연한 초록색
+            marker=dict(size=8, color="#2E8B57"),
+            hovertemplate="연령대: %{x}<br>인구수: %{y:,.0f}명<extra></extra>",
+        )
     )
-    st.dataframe(data_df.T, use_container_width=True)
+
+    fig.update_layout(
+        title=dict(
+            text=f"<b>[{selected_year}] {selected_district} - {gender_option} 연령별 인구수</b>",
+            font=dict(size=18),
+        ),
+        xaxis=dict(
+            title="나이 (연령대)",
+            showgrid=True,
+            gridcolor="#E5E5E5",
+            gridwidth=1,
+            dtick=1,  # 10살 단위 구분선
+        ),
+        yaxis=dict(
+            title="인구수 (명)",
+            showgrid=True,
+            gridcolor="#E5E5E5",
+            gridwidth=1,
+            dtick=100000,  # 10만 단위 구분선
+            tickformat=",.0f",
+        ),
+        hovermode="x unified",
+        plot_bgcolor="white",
+        height=550,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    with st.expander("📊 상세 데이터 확인하기"):
+        data_df = pd.DataFrame(
+            {"연령대": age_categories, "인구수(명)": population_values}
+        )
+        st.dataframe(data_df.T, use_container_width=True)
+
+# --- 기능 2: 연령대 선택 -> 인구수 많은 구 막대 그래프 ---
+else:
+    selected_age = st.sidebar.selectbox(
+        "10살 단위 연령대 선택", age_categories, index=2  # 기본값: 20~29세
+    )
+
+    # 서울특별시 전체를 제외한 각 자치구 데이터만 추출
+    df_districts = df[df["행정구"] != "서울특별시 전체"].copy()
+    target_col = f"{prefix}{selected_age}"
+
+    # 인구수가 많은 순서로 정렬
+    df_sorted = df_districts.sort_values(
+        by=target_col, ascending=False
+    ).reset_index(drop=True)
+
+    # 막대 그래프 생성 (연한 초록색 적용)
+    fig_bar = px.bar(
+        df_sorted,
+        x="행정구",
+        y=target_col,
+        title=f"<b>[{selected_year}] {selected_age} ({gender_option}) 인구가 가장 많은 행정구 순위</b>",
+        labels={"행정구": "행정구역", target_col: "인구수 (명)"},
+        text_auto=",.0f",
+    )
+
+    fig_bar.update_traces(
+        marker_color="#90EE90",
+        marker_line_color="#2E8B57",
+        marker_line_width=1.5,
+        textposition="outside",
+    )
+
+    fig_bar.update_layout(
+        xaxis=dict(title="행정구", tickangle=-45),
+        yaxis=dict(
+            title="인구수 (명)",
+            showgrid=True,
+            gridcolor="#E5E5E5",
+            gridwidth=1,
+            dtick=100000,  # 10만 단위 구분선
+            tickformat=",.0f",
+        ),
+        plot_bgcolor="white",
+        height=550,
+    )
+
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    # 상위 TOP 3 지표 카드 표시
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(
+            "🥇 1위",
+            f"{df_sorted.iloc[0]['행정구']}",
+            f"{df_sorted.iloc[0][target_col]:,} 명",
+        )
+    with col2:
+        st.metric(
+            "🥈 2위",
+            f"{df_sorted.iloc[1]['행정구']}",
+            f"{df_sorted.iloc[1][target_col]:,} 명",
+        )
+    with col3:
+        st.metric(
+            "🥉 3위",
+            f"{df_sorted.iloc[2]['행정구']}",
+            f"{df_sorted.iloc[2][target_col]:,} 명",
+        )
+
+    with st.expander("📊 순위별 전체 데이터 보기"):
+        st.dataframe(
+            df_sorted[["행정구", target_col]].rename(
+                columns={target_col: "인구수(명)"}
+            ),
+            use_container_width=True,
+        )
