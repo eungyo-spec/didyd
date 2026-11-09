@@ -85,8 +85,6 @@ if menu == "1. 서울 월별 평균기온 (1~12월)":
     monthly_avg = (
         sub_df.groupby("월")["평균기온(℃)"].mean().reset_index()
     )
-    # 월 이름을 '1월', '2월'... 형태로 변환용 컬럼 추가
-    monthly_avg["월_이름"] = monthly_avg["월"].astype(str) + "월"
 
     fig = go.Figure()
     fig.add_trace(
@@ -184,7 +182,7 @@ elif menu == "2. 연도별 최고/최저기온 추이":
 
     st.plotly_chart(fig, use_container_width=True)
 
-# --- [과제 3] 연도 2개를 선택하면 2개 년도의 비교 그래프 ---
+# --- [과제 3] 연도 2개를 선택하면 2개 연도의 비교 그래프 ---
 elif menu == "3. 특정 2개 연도 비교 분석":
     st.subheader("⚖️ 특정 2개 연도 기온 비교 분석")
     st.markdown(
@@ -233,7 +231,7 @@ elif menu == "3. 특정 2개 연도 비교 분석":
 
     fig.update_layout(
         title=dict(
-            text=<b>f"{year1}년 vs {year2}년 월별 평균기온 비교 분석"</b>,
+            text=f"<b>{year1}년 vs {year2}년 월별 평균기온 비교 분석</b>",
             font=dict(size=20),
             x=0.5,
             xanchor="center",
