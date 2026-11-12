@@ -22,9 +22,13 @@ def set_korean_font():
 
 set_korean_font()
 
-# 3. 데이터 로드 및 전처리 (1907년 ~ 2026년 연도 변환 포함)
+# 3. 데이터 로드 및 전처리 (pages 폴더 기준 상위 폴더의 temperature.csv 경로 반영)
 @st.cache_data
-def load_data(file_path="temperature.csv"):
+def load_data():
+    # 현재 파일(app.py)이 있는 위치(pages)의 부모 폴더로 이동하여 temperature.csv 경로 지정
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, "..", "temperature.csv")
+    
     try:
         df = pd.read_csv(file_path, encoding="cp949")
     except UnicodeDecodeError:
@@ -51,7 +55,7 @@ def load_data(file_path="temperature.csv"):
         prev_y = y
 
     df["Year"] = years
-    # 결측치(한국전쟁 시기 등) 제거
+    # 결측치 제거
     df = df.dropna(subset=["평균기온(℃)", "Month", "Year"]).copy()
     return df
 
